@@ -33,6 +33,18 @@ def post_message(chat_id, text):
     requests.post(f"{API_BASE}/sendMessage", data=payload)
 
 
+def post_image(chat_id, caption, photo_path):
+    log.debug(f'posting image {photo_path} with caption {caption} to {chat_id}')
+    payload = {
+        "chat_id": chat_id, 'caption': caption
+    }
+
+    files = { "photo": open(photo_path, 'rb') }
+
+    res = requests.post(f'{API_BASE}/sendPhoto', data=payload, files=files)
+    log.debug(f"Result of sending image: {res.status_code}")
+
+
 def handle_incoming_messages(last_updated):
     r = get_updates(last_updated)
     split_chat_text = []
@@ -75,8 +87,14 @@ def handle_incoming_messages(last_updated):
                     Example "/source programming,games" fetches news from r/programming, r/games.
                     Use "/fetch for the bot to go ahead and fetch the news. At the moment, bot will fetch total of 5 posts from all sub reddits
                     I will have this configurable soon.
+                    If you want just a cat... Type /cat.
                 '''
                 post_message(chat_sender_id, helptext)
+
+            if split_chat_text[0] == '/cat':
+                post_message(person_id, "Wait a second, i'm preparing photo of a cat...")
+                post_image(person_id, "This is a cute cat!", 'cat.png')
+                post_message(person_id, "Do you like it?")
 
             if split_chat_text[0] == '/fetch' and (person_id not in skip_list):
                 post_message(person_id, 'Hang on, fetching your news..')
