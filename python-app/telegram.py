@@ -5,6 +5,7 @@ import requests
 from states import States, log
 from constants import *
 from reddit import get_latest_news
+from database import DataBaseController
 
 __author__ = 'Sathyajith'
 
@@ -73,6 +74,12 @@ def handle_incoming_messages(last_updated):
             if (r is not None and r.group(1) == 'source'):
                 if r.group(2):
                     sources_dict[person_id] = r.group(2)
+
+                    # Update source in db for person
+                    DataBaseController.update_source(
+                        fetch_from=sources_dict[person_id], id=person_id
+                    )
+
                     post_message(person_id, f"Sources set as {r.group(2)}!")
                 else:
                     post_message(person_id, 'We need a comma separated list of subreddits! No subreddit, no news :-(')
@@ -99,12 +106,15 @@ def handle_incoming_messages(last_updated):
             if split_chat_text[0] == '/fetch' and (person_id not in skip_list):
                 post_message(person_id, 'Hang on, fetching your news..')
                 try:
-                    sub_reddits = sources_dict[person_id]
+                    sub_reddits = DataBaseController.get_source(id=person_id)
+                    log.debug(f"Loaded source={sub_reddits}")
+                    if sub_reddits is not None:
+                        summarized_news = get_latest_news(sub_reddits.fetch_from)
+                        post_message(person_id, summarized_news)
+                    else:
+                        raise KeyError
                 except KeyError:
                     post_message(person_id, ERR_NO_SOURCE)
-                else:
-                    summarized_news = get_latest_news(sources_dict[person_id])
-                    post_message(person_id, summarized_news)
             last_updated = req['update_id']
             with open('last_updated.txt', 'w') as f:
                 f.write(str(last_updated))

@@ -17,9 +17,20 @@ Most of the code taken from: https://github.com/Apress/practical-docker-with-pyt
     `python newsbot.py`
 
 ### Start Docker
+
+Start docker with next commands:
+
 ```
 docker build -t redditnews-bot .
-docker run -e NBT_ACCESS_TOKEN=<token> redditnews-bot
+docker run --rm --name news-bot -e NBT_ACCESS_TOKEN=<token> -v newsbot-data:/apps/subredditfetcher/python-app/database_data redditnews-bot
 ```
 
-Where `<token>` is your token from BotFather
+Where `<token>` is your token from BotFather.
+
+In docker will be used - Volume `newsbot-data` (`-v` parameter). 
+Main purpose of this parameter - save database data if docker will be dropped/killed/deleted.
+
+And there are some additional parameters, you can delete them if they are not needed in your case:
+- `--rm` mean that docker will be deleted if exit from or close docker;
+- `-e` set environment variable;
+- `--name` name of current docker;
